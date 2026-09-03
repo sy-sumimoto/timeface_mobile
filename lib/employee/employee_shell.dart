@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../common/api/api_exception.dart';
 import '../common/widgets/app_bottom_nav.dart';
 import '../common/widgets/app_top_bar.dart';
 import 'models/punch_state.dart';
@@ -44,9 +45,17 @@ class _EmployeeShellState extends State<EmployeeShell> {
   /// 起動時に一度だけ本日の打刻状況を取得する。マイページ・打刻タブの両方で
   /// この_punchStateを共有するため、EmployeeShell(親)側で1回だけ保持している。
   Future<void> _loadPunchState() async {
-    final state = await widget.repositories.punch.fetchState();
-    if (!mounted) return;
-    setState(() => _punchState = state);
+    try {
+      final state = await widget.repositories.punch.fetchState();
+      if (!mounted) return;
+      setState(() => _punchState = state);
+    } on ApiException catch (e) {
+      // 自動ログイン復元したトークンが期限切れ・失効していた場合はここで401になる。
+      // ローカルの認証情報を破棄してログイン画面へ戻す。
+      if (e.statusCode == 401) {
+        await _handleLogout();
+      }
+    }
   }
 
   /// 出勤/退勤/休憩開始/休憩終了いずれかの打刻APIを呼び、

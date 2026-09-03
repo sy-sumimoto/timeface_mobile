@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../common/providers/secure_storage_provider.dart';
 import '../repositories/employee_repositories.dart';
+import 'secure_token_storage.dart';
 
 part 'employee_repositories_provider.g.dart';
 
@@ -14,5 +16,13 @@ part 'employee_repositories_provider.g.dart';
 /// ここで実装する。
 @riverpod
 EmployeeRepositories employeeRepositories(Ref ref) {
-  return EmployeeRepositories();
+  // ログイン時に発行されたアクセストークンを端末のセキュアストレージへ
+  // 保存するためのアダプタ。HttpAuthRepository がログイン成功時に書き込み、
+  // ログアウト時に削除する。
+  final secureStorage = ref.watch(
+    flutterSecureStorageControllerProvider.notifier,
+  );
+  return EmployeeRepositories(
+    tokenStorage: SecureTokenStorage(secureStorage),
+  );
 }

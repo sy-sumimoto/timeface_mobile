@@ -20,9 +20,12 @@ class CompanyRepositories {
   /// APIのオリジン(scheme + host[:port])。
   /// ビルド時に `--dart-define=API_ORIGIN=https://timeface.ddd-system.co.jp` で指定する。
   /// 未指定時は `php artisan serve --port=8123` で起動したローカルのTimeFace2を指す。
+  /// 既定は Android エミュレータ用の 10.0.2.2(ホストPCの 127.0.0.1 へのエイリアス)。
+  /// iOSシミュレータ/デスクトップからは `--dart-define=API_ORIGIN=http://127.0.0.1:8123`、
+  /// 実機からは `--dart-define=API_ORIGIN=http://<ホストPCのLAN IP>:8123` を指定する。
   static const String _apiOrigin = String.fromEnvironment(
     'API_ORIGIN',
-    defaultValue: 'http://127.0.0.1:8123',
+    defaultValue: 'http://10.0.2.2:8123',
   );
 
   factory CompanyRepositories({

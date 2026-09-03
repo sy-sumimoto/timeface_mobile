@@ -43,6 +43,10 @@ dependencies:
 
   # ローカルストレージ保存(アクセストークンなど)用
   flutter_secure_storage: ^11.0.0
+
+  # ログイン時に端末名(device_name)を取得してサーバーへ送るため。
+  # サーバー側でSanctumトークン名として保存され、端末別のログアウト管理に使われる。
+  device_info_plus: ^13.2.0
   flutter_riverpod: ^3.4.2
   riverpod_annotation: ^4.0.6
   hooks_riverpod: ^3.4.2

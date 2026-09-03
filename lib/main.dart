@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'common/theme/app_colors.dart';
 import 'employee/providers/employee_repositories_provider.dart';
-import 'employee/screens/login_screen.dart';
+import 'employee/screens/startup_screen.dart';
 
 void main() {
   runApp(
@@ -12,13 +12,13 @@ void main() {
   );
 }
 
-/// アプリのルートWidget。テーマ設定と、最初に表示する画面(ログイン画面)を決める。
+/// アプリのルートWidget。テーマ設定と、最初に表示する画面(起動画面)を決める。
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: 従業員ログイン画面の動作確認用に、起点を一時的に従業員ログインへ
+    // TODO: 従業員ログイン画面の動作確認用に、起点を一時的に従業員側へ
     // 切り替えている。従業員・企業管理者・システム管理者向けのロール選択画面
     // (RoleSelectScreen)が実装できたら、そちらを起点に戻す。
     final employeeRepositories = ref.watch(employeeRepositoriesProvider);
@@ -30,7 +30,9 @@ class MyApp extends ConsumerWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
         scaffoldBackgroundColor: AppColors.bodyBg,
       ),
-      home: LoginScreen(repositories: employeeRepositories),
+      // 起動時にセキュアストレージのアクセストークンからログイン状態を復元し、
+      // ログイン画面 or ホーム画面へ振り分ける
+      home: StartupScreen(repositories: employeeRepositories),
     );
   }
 }

@@ -30,11 +30,14 @@ class HttpCompanyAuthRepository implements CompanyAuthRepository {
 
     final employee = data['employee'] as Map<String, dynamic>;
     final name = employee['name'] as String;
+    final userEmail = employee['email'] as String;
     _currentUser = CompanyUser(
       companyName: employee['company_name'] as String,
-      email: employee['email'] as String,
+      email: userEmail,
       initial: name.isNotEmpty ? name.substring(0, 1) : '?',
     );
+    // 認証付きアクセスのログに氏名・メールを出せるよう ApiClient にも渡す
+    client.setUserProfile(name: name, email: userEmail);
     return _currentUser;
   }
 
@@ -46,6 +49,7 @@ class HttpCompanyAuthRepository implements CompanyAuthRepository {
     } finally {
       // サーバー側の呼び出しが失敗してもローカルのトークンは必ず破棄する
       client.setToken(null);
+      client.setUserProfile(name: null, email: null);
     }
   }
 }
