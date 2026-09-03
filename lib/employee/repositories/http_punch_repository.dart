@@ -1,4 +1,5 @@
 import '../../common/api/api_client.dart';
+import '../../common/utils/location.dart';
 import '../models/punch_state.dart';
 import 'auth_repository.dart';
 import 'punch_repository.dart';
@@ -14,10 +15,18 @@ import 'punch_repository.dart';
 /// 氏名も打刻系レスポンスには含まれないため、ログイン時に取得済みの
 /// [AuthRepository.currentUser] から借用する。
 class HttpPunchRepository implements PunchRepository {
-  HttpPunchRepository({required this.client, required this.auth});
+  HttpPunchRepository({
+    required this.client,
+    required this.auth,
+    this.locationResolver = resolveCurrentLocation,
+  });
 
   final ApiClient client;
   final AuthRepository auth;
+
+  /// 出勤打刻時にサーバーへ送る現在地(緯度・経度)を解決する関数。
+  /// 既定は実機のGPS等から取得する [resolveCurrentLocation]。テストでは固定値を返す関数へ差し替える。
+  final LocationResolver locationResolver;
 
   @override
   Future<PunchState> fetchState() async {
@@ -27,7 +36,10 @@ class HttpPunchRepository implements PunchRepository {
 
   @override
   Future<PunchState> clockIn() async {
-    await client.post('/attendance/start-work');
+    // 現在地を取得して緯度・経度を打刻パラメータに載せる。
+    // 位置情報が取れない場合は location が null になり、従来どおりボディ無しで送る。
+    final location = await locationResolver();
+    await client.post('/attendance/start-work', location?.toJson());
     return fetchState();
   }
 

@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- API通信(TimeFace2 / Laravel Sanctum)に必要。release/profileでも必須。 -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- 出勤打刻時に現在地(緯度・経度)を取得するため。 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="timeface_mobile"
         android:name="${applicationName}"
