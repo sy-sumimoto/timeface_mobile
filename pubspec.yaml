@@ -47,6 +47,9 @@ dependencies:
   # ログイン時に端末名(device_name)を取得してサーバーへ送るため。
   # サーバー側でSanctumトークン名として保存され、端末別のログアウト管理に使われる。
   device_info_plus: ^13.2.0
+
+  # 出勤打刻時に端末の現在地(緯度・経度)を取得してサーバーへ送るため。
+  geolocator: ^13.0.1
   flutter_riverpod: ^3.4.2
   riverpod_annotation: ^4.0.6
   hooks_riverpod: ^3.4.2
