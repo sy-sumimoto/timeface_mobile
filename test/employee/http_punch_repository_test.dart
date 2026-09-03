@@ -212,6 +212,9 @@ class _StubAuth implements AuthRepository {
       currentUser;
 
   @override
+  Future<AppUser> me() async => currentUser;
+
+  @override
   Future<AppUser?> restoreSession() async => currentUser;
 
   @override
