@@ -16,6 +16,8 @@ class SecureTokenStorage implements TokenStorage {
   static const String _accessTokenKey = 'employee_access_token';
   static const String _userNameKey = 'employee_user_name';
   static const String _userEmailKey = 'employee_user_email';
+  static const String _userEmployeeNumberKey = 'employee_user_employee_number';
+  static const String _userCompanyNameKey = 'employee_user_company_name';
 
   @override
   Future<void> saveAccessToken(String token) {
@@ -33,22 +35,37 @@ class SecureTokenStorage implements TokenStorage {
   }
 
   @override
-  Future<void> saveUserProfile({required String name, required String email}) async {
-    await _storage.setValue(key: _userNameKey, value: name);
-    await _storage.setValue(key: _userEmailKey, value: email);
+  Future<void> saveUserProfile(StoredUserProfile profile) async {
+    await _storage.setValue(key: _userNameKey, value: profile.name);
+    await _storage.setValue(key: _userEmailKey, value: profile.email);
+    await _writeOptional(_userEmployeeNumberKey, profile.employeeNumber);
+    await _writeOptional(_userCompanyNameKey, profile.companyName);
   }
 
   @override
-  Future<({String name, String email})?> readUserProfile() async {
+  Future<StoredUserProfile?> readUserProfile() async {
     final name = await _storage.getValue(key: _userNameKey);
     final email = await _storage.getValue(key: _userEmailKey);
     if (name == null || email == null) return null;
-    return (name: name, email: email);
+    return (
+      name: name,
+      email: email,
+      employeeNumber: await _storage.getValue(key: _userEmployeeNumberKey),
+      companyName: await _storage.getValue(key: _userCompanyNameKey),
+    );
   }
 
   @override
   Future<void> deleteUserProfile() async {
     await _storage.deleteValue(key: _userNameKey);
     await _storage.deleteValue(key: _userEmailKey);
+    await _storage.deleteValue(key: _userEmployeeNumberKey);
+    await _storage.deleteValue(key: _userCompanyNameKey);
+  }
+
+  /// null のときはキー自体を消しておく(古い値が残らないように)。
+  Future<void> _writeOptional(String key, String? value) {
+    if (value == null) return _storage.deleteValue(key: key);
+    return _storage.setValue(key: key, value: value);
   }
 }

@@ -8,6 +8,10 @@ abstract class AuthRepository {
 
   Future<AppUser> login({required String email, required String password});
 
+  /// ログイン中の従業員情報を `GET /api/mobile/me` から取得し直す。
+  /// [currentUser] を最新化して返す(氏名・メール・社員番号・会社名など)。
+  Future<AppUser> me();
+
   /// アプリ起動時に、端末に保存済みのアクセストークンからログイン状態を復元する。
   /// 復元できたら[currentUser]を埋めて[AppUser]を返す。保存済みトークンが
   /// 無ければ null を返す(呼び出し側はログイン画面へ遷移する)。
@@ -23,6 +27,8 @@ class MockAuthRepository implements AuthRepository {
     name: '中村陽子',
     email: 'nakamura@example.co.jp',
     initial: '中',
+    employeeNumber: '0001',
+    companyName: 'モックカンパニー株式会社',
   );
 
   @override
@@ -31,6 +37,12 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<AppUser> login({required String email, required String password}) async {
     await Future.delayed(const Duration(milliseconds: 400));
+    return _user;
+  }
+
+  @override
+  Future<AppUser> me() async {
+    await Future.delayed(const Duration(milliseconds: 200));
     return _user;
   }
 
