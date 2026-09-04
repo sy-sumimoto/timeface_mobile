@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/announcement.dart';
 import '../repositories/announcement_repository.dart';
 import '../../common/theme/app_colors.dart';
+import '../../common/utils/html_text.dart';
 import '../../common/widgets/app_back_bar.dart';
 import '../../common/widgets/badge.dart';
 
@@ -69,7 +70,12 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                : Text(_announcement.body, style: const TextStyle(fontSize: 14, height: 1.6)),
+                : SelectableText(
+                    // message はサニタイズ済みHTML。HTMLレンダラを持たないため
+                    // プレーンテキスト化して表示する。
+                    htmlToPlainText(_announcement.body),
+                    style: const TextStyle(fontSize: 14, height: 1.6),
+                  ),
           ],
         ),
       ),
