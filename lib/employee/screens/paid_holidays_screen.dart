@@ -109,38 +109,58 @@ class _PaidHolidaysScreenState extends State<PaidHolidaysScreen> {
                         height: 100,
                         child: Center(child: CircularProgressIndicator()),
                       )
-                    : GridView.count(
-                        crossAxisCount: 3,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.05,
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          KpiCard(
-                            compact: true,
-                            label: '残日数',
-                            value: summary.remainingDays,
-                            delta: '直近付与11日',
-                            icon: Icons.wb_sunny_rounded,
-                            iconColor: KpiIconColor.green,
+                          if (summary.hasExpiringSoon) ...[
+                            _ExpiringSoonAlert(
+                              days: summary.expiringSoonDays,
+                              date: summary.expiringSoonDate,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          GridView.count(
+                            crossAxisCount: 3,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.05,
+                            children: [
+                              KpiCard(
+                                compact: true,
+                                label: '残日数',
+                                value: summary.remainingDays,
+                                delta: '直近付与11日',
+                                icon: Icons.wb_sunny_rounded,
+                                iconColor: KpiIconColor.green,
+                              ),
+                              KpiCard(
+                                compact: true,
+                                label: '消化予定',
+                                value: summary.plannedDays,
+                                delta: '承認済み未取得分',
+                                icon: Icons.calendar_month_rounded,
+                                iconColor: KpiIconColor.blue,
+                              ),
+                              KpiCard(
+                                compact: true,
+                                label: '次回付与日',
+                                value: summary.nextGrantDate,
+                                delta: ' ',
+                                icon: Icons.event_rounded,
+                                iconColor: KpiIconColor.purple,
+                              ),
+                            ],
                           ),
-                          KpiCard(
-                            compact: true,
-                            label: '消化予定',
-                            value: summary.plannedDays,
-                            delta: '承認済み未取得分',
-                            icon: Icons.calendar_month_rounded,
-                            iconColor: KpiIconColor.blue,
-                          ),
-                          KpiCard(
-                            compact: true,
-                            label: '次回付与日',
-                            value: summary.nextGrantDate,
-                            delta: ' ',
-                            icon: Icons.event_rounded,
-                            iconColor: KpiIconColor.purple,
-                          ),
+                          if (summary.previousPeriodDays != null ||
+                              summary.currentPeriodDays != null) ...[
+                            const SizedBox(height: 10),
+                            _PeriodBreakdown(
+                              previous: summary.previousPeriodDays,
+                              current: summary.currentPeriodDays,
+                            ),
+                          ],
                         ],
                       ),
               ),
@@ -272,6 +292,91 @@ class _PaidHolidaysScreenState extends State<PaidHolidaysScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 失効が近い有給休暇付与がある場合に残日数サマリー上部へ出す警告バナー。
+/// `balance.hasExpiringSoon` が true のときだけ表示される。
+class _ExpiringSoonAlert extends StatelessWidget {
+  const _ExpiringSoonAlert({this.days, this.date});
+
+  final String? days;
+  final String? date;
+
+  String get _message {
+    if (days != null && date != null) {
+      return '有給休暇 $days が $date に失効します';
+    }
+    if (days != null) return '有給休暇 $days がまもなく失効します';
+    if (date != null) return '$date に失効する有給休暇があります';
+    return 'まもなく失効する有給休暇があります';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.badgeWarningBg,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.warning_amber_rounded,
+              size: 16, color: AppColors.badgeWarningText),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              _message,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.badgeWarningText,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 残日数の前期付与ぶん / 今期付与ぶんの内訳を1行で表示する。
+class _PeriodBreakdown extends StatelessWidget {
+  const _PeriodBreakdown({this.previous, this.current});
+
+  final String? previous;
+  final String? current;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.badgeNeutralBg,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Text.rich(
+        TextSpan(
+          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          children: [
+            const TextSpan(text: '内訳  '),
+            TextSpan(
+              text: '前期 ${previous ?? '—'}',
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700, color: AppColors.textBase),
+            ),
+            const TextSpan(text: '  ・  '),
+            TextSpan(
+              text: '今期 ${current ?? '—'}',
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700, color: AppColors.textBase),
+            ),
+          ],
+        ),
       ),
     );
   }

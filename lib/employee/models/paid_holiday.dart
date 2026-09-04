@@ -10,18 +10,38 @@ enum PaidHolidayType { fullDay, halfDay }
 /// 詳細な対応関係は同メソッドのコメントを参照。
 enum PaidHolidayStatus { pending, rejected, approved }
 
-/// 有給休暇の残日数サマリー。TimeFace2の `paid_holidays` レスポンス中の `balance`
-/// (PaidHolidayBalanceDto)に対応する。
+/// 有給休暇の残日数サマリー。TimeFace の `GET /api/mobile/paid-holidays/balance`
+/// のレスポンス(`balance` = PaidHolidayBalanceDto)に対応する。
 class PaidHolidaySummary {
   const PaidHolidaySummary({
     required this.remainingDays,
     required this.plannedDays,
     required this.nextGrantDate,
+    this.previousPeriodDays,
+    this.currentPeriodDays,
+    this.hasExpiringSoon = false,
+    this.expiringSoonDays,
+    this.expiringSoonDate,
   });
 
   final String remainingDays;
   final String plannedDays;
   final String nextGrantDate;
+
+  /// 前期付与ぶんの残日数(`previousPeriodRemainingDays`)。取得できなければ null。
+  final String? previousPeriodDays;
+
+  /// 今期付与ぶんの残日数(`currentPeriodRemainingDays`)。取得できなければ null。
+  final String? currentPeriodDays;
+
+  /// 失効が近い(既定3ヶ月以内)付与があるか(`hasExpiringSoon`)。
+  final bool hasExpiringSoon;
+
+  /// 失効が近い付与の残日数ラベル(`expiringSoonDaysLabel`。例: "8.5日")。
+  final String? expiringSoonDays;
+
+  /// 失効が近い付与の有効期限ラベル(`expiringSoonDateLabel`。例: "2026/9/30")。
+  final String? expiringSoonDate;
 }
 
 /// 有給休暇の申請1件分。TimeFace2の有給休暇申請(PaidHolidayRequest)テーブルの

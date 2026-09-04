@@ -80,6 +80,11 @@ class MockPaidHolidayRepository implements PaidHolidayRepository {
       remainingDays: '8.5日',
       plannedDays: '1.0日',
       nextGrantDate: '2027-01-15',
+      previousPeriodDays: '3日',
+      currentPeriodDays: '5.5日',
+      hasExpiringSoon: true,
+      expiringSoonDays: '3日',
+      expiringSoonDate: '2026/9/30',
     );
   }
 
