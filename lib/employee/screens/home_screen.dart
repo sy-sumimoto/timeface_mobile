@@ -59,7 +59,9 @@ class _HomeScreenState extends State<HomeScreen> {
         .fetchSummary();
     final paidHolidayRequests =
         await widget.repositories.paidHoliday.fetchRequests();
-    final announcements = await widget.repositories.announcement.fetchAll();
+    // ホームでは最新1件だけ使うので1ページ目のみ取得する
+    final announcementPage =
+        await widget.repositories.announcement.fetchPage(1);
     if (!mounted) return;
     setState(() {
       _attendanceSummary = attendance;
@@ -68,8 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _hasRejectedRequest = paidHolidayRequests.pending.any(
         (e) => e.status == PaidHolidayStatus.rejected,
       );
-      _latestAnnouncement = announcements.isNotEmpty
-          ? announcements.first
+      _latestAnnouncement = announcementPage.items.isNotEmpty
+          ? announcementPage.items.first
           : null;
     });
   }

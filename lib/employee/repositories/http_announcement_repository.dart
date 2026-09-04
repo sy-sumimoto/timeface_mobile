@@ -2,19 +2,26 @@ import '../../common/api/api_client.dart';
 import '../models/announcement.dart';
 import 'announcement_repository.dart';
 
-/// TimeFace2 (`/api/mobile/announcements`)を叩く実装。
+/// TimeFace (`/api/mobile/announcements`)を叩く実装。
 class HttpAnnouncementRepository implements AnnouncementRepository {
   HttpAnnouncementRepository({required this.client});
 
   final ApiClient client;
 
   @override
-  Future<List<Announcement>> fetchAll() async {
-    // AnnouncementController@index: 自社向けに公開中のお知らせ一覧(1ページ目)。
-    // 一覧レスポンスに本文(message)は含まれない。
-    final data = await client.get('/announcements');
+  Future<AnnouncementPage> fetchPage(int page) async {
+    // AnnouncementController@index: 自社向けに公開中のお知らせ一覧。
+    // `page` クエリで1ページ10件ずつ。一覧レスポンスに本文(message)は含まれない。
+    final data = await client.get('/announcements?page=$page');
     final list = data['items'] as List;
-    return list.map((e) => _summaryFromJson(e as Map<String, dynamic>)).toList();
+    final pagination = data['pagination'] as Map<String, dynamic>;
+    return (
+      items: list
+          .map((e) => _summaryFromJson(e as Map<String, dynamic>))
+          .toList(),
+      currentPage: pagination['currentPage'] as int,
+      lastPage: pagination['lastPage'] as int,
+    );
   }
 
   @override
