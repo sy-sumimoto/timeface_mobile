@@ -34,13 +34,13 @@ class _PaidHolidaysScreenState extends State<PaidHolidaysScreen> {
 
   Future<void> _load() async {
     final summary = await widget.repository.fetchSummary();
-    final pending = await widget.repository.fetchPending();
-    final processed = await widget.repository.fetchProcessed();
+    // 申請中・処理済みは1回の GET /paid-holidays でまとめて取得する
+    final requests = await widget.repository.fetchRequests();
     if (!mounted) return;
     setState(() {
       _summary = summary;
-      _pending = pending;
-      _processed = processed;
+      _pending = requests.pending;
+      _processed = requests.processed;
     });
   }
 

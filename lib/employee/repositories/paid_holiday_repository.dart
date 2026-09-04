@@ -1,12 +1,23 @@
 import '../models/paid_holiday.dart';
 import '../../common/utils/date_format.dart';
 
+/// 申請中(pending)・処理済み(processed)の申請リストをまとめて返すための型。
+typedef PaidHolidayRequestLists = ({
+  List<PaidHolidayRequest> pending,
+  List<PaidHolidayRequest> processed,
+});
+
 abstract class PaidHolidayRepository {
   Future<PaidHolidaySummary> fetchSummary();
 
-  Future<List<PaidHolidayRequest>> fetchPending();
-
-  Future<List<PaidHolidayRequest>> fetchProcessed();
+  /// 申請中・処理済みの両リストを1回の `GET /api/mobile/paid-holidays` で取得する。
+  ///
+  /// サーバーは各リストを `pending_page` / `processed_page` で個別にページングし、
+  /// それぞれ `pagination` を返すが、モバイルは各リストとも1ページ目のみを表示する
+  /// ため、ページ指定は行わず `pagination` も参照しない。
+  /// (以前は fetchPending / fetchProcessed が同じエンドポイントを別々に叩いており、
+  ///  1画面の表示で `GET /paid-holidays` が2回発行されていた。)
+  Future<PaidHolidayRequestLists> fetchRequests();
 
   /// 開始日・休暇区分・取得日数から終了日を算出する(TimeFace2側で企業休日等を考慮して計算する)。
   /// 戻り値の文字列は改変せず、そのまま submitCreate/submitEdit の computedEndDate に渡すこと
@@ -89,15 +100,14 @@ class MockPaidHolidayRepository implements PaidHolidayRepository {
   }
 
   @override
-  Future<List<PaidHolidayRequest>> fetchPending() async {
+  Future<PaidHolidayRequestLists> fetchRequests() async {
     await Future.delayed(const Duration(milliseconds: 200));
-    return _items.where((e) => e.status != PaidHolidayStatus.approved).toList();
-  }
-
-  @override
-  Future<List<PaidHolidayRequest>> fetchProcessed() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return _items.where((e) => e.status == PaidHolidayStatus.approved).toList();
+    return (
+      pending:
+          _items.where((e) => e.status != PaidHolidayStatus.approved).toList(),
+      processed:
+          _items.where((e) => e.status == PaidHolidayStatus.approved).toList(),
+    );
   }
 
   @override
