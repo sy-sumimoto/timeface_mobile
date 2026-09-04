@@ -185,6 +185,30 @@ class _AttendancesScreenState extends State<AttendancesScreen> {
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
+            if (summary.hasUnresolvableDay) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.badgeWarningBg,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 15, color: AppColors.badgeWarningText),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '勤務パターン未設定などにより、残業・休日出勤を判定できない日があります。',
+                        style: TextStyle(fontSize: 12, color: AppColors.badgeWarningText),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             if (summary.records.isEmpty && summary.restDays.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 32),
@@ -207,6 +231,14 @@ class _AttendancesScreenState extends State<AttendancesScreen> {
                   scheduledTime: record.scheduledTime,
                   actualTime: record.actualTime,
                   breakTime: record.breakTime,
+                  workedTime: record.workedTime,
+                  overtime: record.overtime,
+                  holidayWork: record.holidayWork,
+                  midnight: record.midnight,
+                  midnightIsEstimate: record.midnightIsEstimate,
+                  isUnresolvable: record.isUnresolvable,
+                  approvalLabel: record.approvalLabel,
+                  note: record.note,
                 ),
                 const SizedBox(height: 10),
               ],

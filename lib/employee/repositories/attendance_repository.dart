@@ -22,12 +22,13 @@ class MockAttendanceRepository implements AttendanceRepository {
         totalWorkTime: '49時間30分',
         overtimeText: 'うち残業 3時間30分',
         unapprovedCount: '0件',
+        hasUnresolvableDay: true,
         records: const [
-          AttendanceRecord(date: '8月3日(月)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜18:00', actualTime: '9:00〜18:02', breakTime: '1時間00分'),
-          AttendanceRecord(date: '8月4日(火)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜18:00', actualTime: '8:58〜18:03', breakTime: '1時間00分'),
-          AttendanceRecord(date: '8月5日(水)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜18:00', actualTime: '9:01〜18:00', breakTime: '1時間00分'),
-          AttendanceRecord(date: '8月6日(木)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜19:30', actualTime: '8:59〜19:35', breakTime: '1時間00分'),
-          AttendanceRecord(date: '8月7日(金)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜19:30', actualTime: '8:57〜19:33', breakTime: '1時間00分'),
+          AttendanceRecord(date: '8月3日(月)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜18:00', actualTime: '9:00〜18:02', breakTime: '1時間00分', workedTime: '8時間00分', overtime: '0時間00分', holidayWork: '0時間00分', midnight: '0時間00分', approvalLabel: '承認済み'),
+          AttendanceRecord(date: '8月4日(火)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜18:00', actualTime: '8:58〜18:03', breakTime: '1時間00分', workedTime: '8時間00分', overtime: '0時間00分', holidayWork: '0時間00分', midnight: '0時間00分', approvalLabel: '承認済み', note: '直行', noteFull: '直行のため事業所到着は10時'),
+          AttendanceRecord(date: '8月5日(水)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜18:00', actualTime: '9:01〜18:00', breakTime: '1時間00分', workedTime: '7時間59分', overtime: '0時間00分', holidayWork: '0時間00分', midnight: '0時間00分', approvalLabel: '承認済み'),
+          AttendanceRecord(date: '8月6日(木)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜19:30', actualTime: '8:59〜19:35', breakTime: '1時間00分', workedTime: '9時間36分', overtime: '1時間36分', holidayWork: '0時間00分', midnight: '0時間00分', approvalLabel: '申請中'),
+          AttendanceRecord(date: '8月7日(金)', workType: '通常勤務', statusLabel: '出勤', scheduledTime: '9:00〜19:30', actualTime: '8:57〜19:33', breakTime: '1時間00分', workedTime: '9時間36分', overtime: '判定不可', holidayWork: '判定不可', midnight: '1時間30分', midnightIsEstimate: true, isUnresolvable: true, approvalLabel: '申請中'),
         ],
         restDays: const [
           AttendanceRestDay(date: '8月8日(土)', label: '所定休日'),
