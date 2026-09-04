@@ -16,19 +16,20 @@ class HttpPaidHolidayRepository implements PaidHolidayRepository {
   }
 
   @override
-  Future<List<PaidHolidayRequest>> fetchPending() async {
-    // GET /paid-holidays は pending/processed を1回のレスポンスで両方返すが、
-    // fetchPending/fetchProcessedが独立して呼ばれる既存のインターフェースに
-    // 合わせているため、ここでは pending 側だけを使う(2回叩くことになる点は許容)。
+  Future<PaidHolidayRequestLists> fetchRequests() async {
+    // GET /paid-holidays は pending / processed を1回のレスポンスで両方返す。
+    // 各リストは pending_page / processed_page で個別ページングされ pagination も
+    // 返るが、モバイルは各1ページ目のみ表示するためページ指定はしない。
     final data = await client.get('/paid-holidays');
-    final items = (data['pending'] as Map<String, dynamic>)['items'] as List;
-    return items.map((e) => _requestFrom(e as Map<String, dynamic>)).toList();
+    return (
+      pending: _requestsFrom(data['pending']),
+      processed: _requestsFrom(data['processed']),
+    );
   }
 
-  @override
-  Future<List<PaidHolidayRequest>> fetchProcessed() async {
-    final data = await client.get('/paid-holidays');
-    final items = (data['processed'] as Map<String, dynamic>)['items'] as List;
+  /// `{ "items": [...], "pagination": {...} }` の `items` を PaidHolidayRequest 列へ変換する。
+  List<PaidHolidayRequest> _requestsFrom(Object? list) {
+    final items = (list as Map<String, dynamic>)['items'] as List;
     return items.map((e) => _requestFrom(e as Map<String, dynamic>)).toList();
   }
 

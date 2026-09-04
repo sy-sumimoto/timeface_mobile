@@ -15,10 +15,8 @@ class _FakePaidHolidayRepository implements PaidHolidayRepository {
   Future<PaidHolidaySummary> fetchSummary() async => summary;
 
   @override
-  Future<List<PaidHolidayRequest>> fetchPending() async => const [];
-
-  @override
-  Future<List<PaidHolidayRequest>> fetchProcessed() async => const [];
+  Future<PaidHolidayRequestLists> fetchRequests() async =>
+      (pending: const <PaidHolidayRequest>[], processed: const <PaidHolidayRequest>[]);
 
   @override
   Future<String> calculateEndDate({

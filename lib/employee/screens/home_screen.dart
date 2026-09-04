@@ -57,14 +57,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     final paidHolidaySummary = await widget.repositories.paidHoliday
         .fetchSummary();
-    final pending = await widget.repositories.paidHoliday.fetchPending();
+    final paidHolidayRequests =
+        await widget.repositories.paidHoliday.fetchRequests();
     final announcements = await widget.repositories.announcement.fetchAll();
     if (!mounted) return;
     setState(() {
       _attendanceSummary = attendance;
       _paidHolidaySummary = paidHolidaySummary;
-      // 差し戻し(request_status=4)は申請中タブ(fetchPending)に含まれる
-      _hasRejectedRequest = pending.any(
+      // 差し戻し(request_status=4)は申請中(pending)側に含まれる
+      _hasRejectedRequest = paidHolidayRequests.pending.any(
         (e) => e.status == PaidHolidayStatus.rejected,
       );
       _latestAnnouncement = announcements.isNotEmpty
