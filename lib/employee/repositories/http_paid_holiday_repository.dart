@@ -114,11 +114,27 @@ class HttpPaidHolidayRepository implements PaidHolidayRepository {
 
   PaidHolidaySummary _summaryFrom(Map<String, dynamic> balance) {
     return PaidHolidaySummary(
-      remainingDays: '${balance['totalRemainingDays']}日',
+      remainingDays: _daysLabel(balance['totalRemainingDays']) ?? '-',
       // 消化予定(承認済み未取得分)を返すAPIが無いため未対応のまま
       plannedDays: '-',
       nextGrantDate: (balance['nextScheduledGrantedDate'] as String?) ?? '未定',
+      previousPeriodDays: _daysLabel(balance['previousPeriodRemainingDays']),
+      currentPeriodDays: _daysLabel(balance['currentPeriodRemainingDays']),
+      hasExpiringSoon: balance['hasExpiringSoon'] as bool? ?? false,
+      expiringSoonDays: balance['expiringSoonDaysLabel'] as String?,
+      expiringSoonDate: balance['expiringSoonDateLabel'] as String?,
     );
+  }
+
+  /// APIは残日数を文字列("10" / "10.0" / "8.5")で返す。末尾の ".0" を落として
+  /// "10日" / "8.5日" のように整形する。null・空はそのまま null を返す。
+  String? _daysLabel(Object? raw) {
+    if (raw == null) return null;
+    final s = raw.toString();
+    if (s.isEmpty) return null;
+    final n = num.tryParse(s);
+    if (n == null) return '$s日';
+    return n == n.roundToDouble() ? '${n.toInt()}日' : '$n日';
   }
 
   PaidHolidayRequest _requestFrom(Map<String, dynamic> item) {
