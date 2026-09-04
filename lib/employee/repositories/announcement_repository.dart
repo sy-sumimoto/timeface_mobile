@@ -2,16 +2,19 @@ import '../models/announcement.dart';
 
 /// お知らせ一覧・詳細の取得口。
 abstract class AnnouncementRepository {
-  /// 公開中のお知らせ一覧を取得する(1ページ目のみ。本文(body)は含まれない)。
-  Future<List<Announcement>> fetchAll();
+  /// 公開中のお知らせを指定ページ分だけ取得する(1ページ10件・本文(body)は含まれない)。
+  /// 戻り値の [AnnouncementPage.currentPage] / [AnnouncementPage.lastPage] で
+  /// 続きのページがあるか判定できる。
+  Future<AnnouncementPage> fetchPage(int page);
 
   /// お知らせ詳細を取得する。取得と同時にサーバー側で既読になる。
   Future<Announcement> fetchDetail(String id);
 }
 
-/// 固定のお知らせ2件を返すモック実装。TimeFace2側にお知らせ取得APIが
-/// まだ無いため、当面はこの実装のみを使う([EmployeeRepositories]参照)。
+/// 固定のお知らせを返すモック実装。1ページ10件でページングする。
 class MockAnnouncementRepository implements AnnouncementRepository {
+  static const int _perPage = 10;
+
   final List<Announcement> _items = const [
     Announcement(
       id: 'a1',
@@ -34,10 +37,16 @@ class MockAnnouncementRepository implements AnnouncementRepository {
     ),
   ];
 
+  int get _lastPage => (_items.length / _perPage).ceil().clamp(1, 1 << 30);
+
   @override
-  Future<List<Announcement>> fetchAll() async {
+  Future<AnnouncementPage> fetchPage(int page) async {
     await Future.delayed(const Duration(milliseconds: 250));
-    return _items;
+    final start = (page - 1) * _perPage;
+    final items = start >= _items.length
+        ? const <Announcement>[]
+        : _items.sublist(start, (start + _perPage).clamp(0, _items.length));
+    return (items: items, currentPage: page, lastPage: _lastPage);
   }
 
   @override

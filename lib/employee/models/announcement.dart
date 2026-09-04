@@ -17,3 +17,11 @@ class Announcement {
   final String body;
   final bool isNew;
 }
+
+/// お知らせ一覧の1ページ分。`GET /api/mobile/announcements?page=` の
+/// `items` と `pagination`(1ページ10件)に対応する。
+typedef AnnouncementPage = ({
+  List<Announcement> items,
+  int currentPage,
+  int lastPage,
+});
