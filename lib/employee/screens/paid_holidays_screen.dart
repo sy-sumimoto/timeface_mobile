@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/paid_holiday.dart';
 import '../repositories/paid_holiday_repository.dart';
+import '../../common/api/api_exception.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/widgets/badge.dart';
 import '../../common/widgets/kpi_card.dart';
@@ -66,6 +67,54 @@ class _PaidHolidaysScreenState extends State<PaidHolidaysScreen> {
     );
     if (result == true) _load();
   }
+
+  /// 有給休暇申請を取り下げる。確認ダイアログを挟み、成功したら一覧を再取得する。
+  Future<void> _withdraw(PaidHolidayRequest request) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('申請の取り下げ'),
+        content: Text(
+          '${request.periodLabel}（${request.typeLabel} ${request.daysLabel}）の'
+          '有給休暇申請を取り下げます。よろしいですか?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.badgeDangerText),
+            child: const Text('取り下げる'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await widget.repository.withdrawRequest(request.id);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('有給休暇申請を取り下げました')),
+      );
+      _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.errorFor('failed') ?? e.message)),
+      );
+    }
+  }
+
+  /// 処理済みタブの申請を取り下げできるか（承認済み かつ 開始日前のみ）。
+  /// 申請中タブの申請（承認待ち・差し戻し）は常に取り下げ可能なので判定不要。
+  /// 最終的な可否はサーバー側が判定し、不可なら 422 を返す。
+  bool _canWithdrawProcessed(PaidHolidayRequest request) =>
+      request.status == PaidHolidayStatus.approved &&
+      request.startDate.isAfter(DateTime.now());
 
   AppBadgeVariant _statusVariant(PaidHolidayStatus status) {
     switch (status) {
@@ -222,12 +271,17 @@ class _PaidHolidaysScreenState extends State<PaidHolidaysScreen> {
                                           '申請日 ${request.appliedDate}',
                                         ],
                                         noteText: request.rejectionNote,
-                                        footerActionLabel:
+                                        // 申請中タブの申請（承認待ち・差し戻し）は取り下げ可能
+                                        footerActionLabel: '取り下げ',
+                                        onFooterActionTap: () =>
+                                            _withdraw(request),
+                                        // 差し戻しはあわせて「修正して再申請」も出す
+                                        trailingActionLabel:
                                             request.status ==
                                                 PaidHolidayStatus.rejected
                                             ? '修正して再申請'
                                             : null,
-                                        onFooterActionTap:
+                                        onTrailingActionTap:
                                             request.status ==
                                                 PaidHolidayStatus.rejected
                                             ? () => _openEdit(request)
@@ -272,6 +326,15 @@ class _PaidHolidaysScreenState extends State<PaidHolidaysScreen> {
                                           if (request.processedAt != null)
                                             request.processedAt!,
                                         ],
+                                        // 承認済みで開始日前なら取り下げ可能
+                                        footerActionLabel:
+                                            _canWithdrawProcessed(request)
+                                            ? '取り下げ'
+                                            : null,
+                                        onFooterActionTap:
+                                            _canWithdrawProcessed(request)
+                                            ? () => _withdraw(request)
+                                            : null,
                                       ),
                                       const SizedBox(height: 12),
                                     ],

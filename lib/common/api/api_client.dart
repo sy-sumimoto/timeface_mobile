@@ -80,6 +80,12 @@ class ApiClient {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> delete(String path) async {
+    _logAuthenticatedAccess('DELETE', path);
+    final response = await http.delete(Uri.parse('$baseUrl$path'), headers: _headers);
+    return _decode(response);
+  }
+
   /// レスポンスボディをJSONにデコードし、4xx/5xxならLaravelの
   /// バリデーションエラー形式(`message` + フィールド別`errors`)を[ApiException]に変換する。
   Map<String, dynamic> _decode(http.Response response) {

@@ -44,6 +44,12 @@ abstract class PaidHolidayRepository {
     required double usedDays,
     String? note,
   });
+
+  /// 有給休暇申請を取り下げる(`DELETE /api/mobile/paid-holidays/{id}`)。
+  ///
+  /// 申請中・差し戻し、および開始日前の承認済みは取り下げ可能。
+  /// 消化済み・開始日を過ぎた承認済みはサーバー側で拒否され [ApiException](422)になる。
+  Future<void> withdrawRequest(String id);
 }
 
 /// モック実装。作成・再申請はアプリ内メモリの一覧を実際に書き換えるため、
@@ -167,5 +173,11 @@ class MockPaidHolidayRepository implements PaidHolidayRepository {
     );
     _items[index] = updated;
     return updated;
+  }
+
+  @override
+  Future<void> withdrawRequest(String id) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    _items.removeWhere((e) => e.id == id);
   }
 }

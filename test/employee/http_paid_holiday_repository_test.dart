@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timeface_mobile/common/api/api_client.dart';
+import 'package:timeface_mobile/common/api/api_exception.dart';
 import 'package:timeface_mobile/employee/models/paid_holiday.dart';
 import 'package:timeface_mobile/employee/repositories/http_paid_holiday_repository.dart';
 
@@ -122,19 +123,61 @@ void main() {
       expect(api.getPaths, ['/paid-holidays']);
     });
   });
+
+  group('withdrawRequest', () {
+    test('DELETE /paid-holidays/{id} を叩く', () async {
+      final api = _FakeApiClient({'message': '有給休暇申請を取り下げました'});
+      final repo = HttpPaidHolidayRepository(client: api);
+
+      await repo.withdrawRequest('42');
+
+      expect(api.deletePaths, ['/paid-holidays/42']);
+    });
+
+    test('取り下げ不可(422)は ApiException として送出される', () async {
+      final api = _FakeApiClient(
+        {'message': '有給休暇申請を取り下げました'},
+        deleteError: ApiException(
+          statusCode: 422,
+          message: 'Validation error',
+          errors: {
+            'failed': ['開始日を過ぎているため取り下げできません。'],
+          },
+        ),
+      );
+      final repo = HttpPaidHolidayRepository(client: api);
+
+      await expectLater(
+        repo.withdrawRequest('42'),
+        throwsA(isA<ApiException>()
+            .having((e) => e.statusCode, 'statusCode', 422)
+            .having((e) => e.errorFor('failed'), 'errorFor', '開始日を過ぎているため取り下げできません。')),
+      );
+    });
+  });
 }
 
 class _FakeApiClient extends ApiClient {
-  _FakeApiClient(this.response) : super(baseUrl: 'http://test.local/api/mobile');
+  _FakeApiClient(this.response, {this.deleteError})
+      : super(baseUrl: 'http://test.local/api/mobile');
 
   final Map<String, dynamic> response;
+  final Object? deleteError;
   final List<String> getPaths = [];
+  final List<String> deletePaths = [];
 
   String? get lastPath => getPaths.isEmpty ? null : getPaths.last;
 
   @override
   Future<Map<String, dynamic>> get(String path) async {
     getPaths.add(path);
+    return response;
+  }
+
+  @override
+  Future<Map<String, dynamic>> delete(String path) async {
+    deletePaths.add(path);
+    if (deleteError != null) throw deleteError!;
     return response;
   }
 }

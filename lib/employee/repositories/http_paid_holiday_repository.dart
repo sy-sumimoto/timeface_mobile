@@ -97,6 +97,13 @@ class HttpPaidHolidayRepository implements PaidHolidayRepository {
     );
   }
 
+  @override
+  Future<void> withdrawRequest(String id) async {
+    // PaidHolidayController@destroy: 取り下げ不可(消化済み・開始日を過ぎた承認済み)は
+    // 422 で errors.failed にメッセージが入る。承認済みを取り下げると残日数はサーバー側で戻る。
+    await client.delete('/paid-holidays/$id');
+  }
+
   Map<String, dynamic> _savePayload(
     DateTime startDate,
     String computedEndDate,
