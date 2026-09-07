@@ -31,6 +31,13 @@ class HttpAnnouncementRepository implements AnnouncementRepository {
     return _detailFromJson(data['announcement'] as Map<String, dynamic>);
   }
 
+  @override
+  Future<int> fetchUnreadCount() async {
+    // AnnouncementController@unreadCount: 通知バッジ表示用の未読件数
+    final data = await client.get('/announcements/unread-count');
+    return data['unreadCount'] as int;
+  }
+
   Announcement _summaryFromJson(Map<String, dynamic> item) {
     return Announcement(
       id: item['id'].toString(),

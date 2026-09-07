@@ -28,6 +28,9 @@ class _FakeAnnouncementRepository implements AnnouncementRepository {
   @override
   Future<Announcement> fetchDetail(String id) async =>
       pages.values.expand((e) => e).firstWhere((e) => e.id == id);
+
+  @override
+  Future<int> fetchUnreadCount() async => 0;
 }
 
 Announcement _a(int id) => Announcement(

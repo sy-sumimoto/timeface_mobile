@@ -17,6 +17,9 @@ class _FakeAnnouncementRepository implements AnnouncementRepository {
   @override
   Future<AnnouncementPage> fetchPage(int page) async =>
       (items: const <Announcement>[], currentPage: page, lastPage: 1);
+
+  @override
+  Future<int> fetchUnreadCount() async => 0;
 }
 
 void main() {

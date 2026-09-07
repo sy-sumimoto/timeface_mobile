@@ -35,11 +35,25 @@ class EmployeeShell extends StatefulWidget {
 class _EmployeeShellState extends State<EmployeeShell> {
   int _tabIndex = 0;
   PunchState? _punchState;
+  int _unreadAnnouncements = 0;
 
   @override
   void initState() {
     super.initState();
     _loadPunchState();
+    _loadUnreadAnnouncements();
+  }
+
+  /// お知らせの未読件数を取得して下部タブのバッジに反映する。
+  /// 起動時と、お知らせ一覧が再取得されたタイミング(詳細を開いて既読化した直後など)に呼ぶ。
+  Future<void> _loadUnreadAnnouncements() async {
+    try {
+      final count = await widget.repositories.announcement.fetchUnreadCount();
+      if (!mounted) return;
+      setState(() => _unreadAnnouncements = count);
+    } on ApiException {
+      // 未読件数の取得失敗はバッジ非表示のままにするだけで画面遷移はしない
+    }
   }
 
   /// 起動時に一度だけ本日の打刻状況を取得する。マイページ・打刻タブの両方で
@@ -90,7 +104,22 @@ class _EmployeeShellState extends State<EmployeeShell> {
         userEmail: user.email,
         onLogout: _handleLogout,
       ),
-      bottomNavigationBar: AppBottomNav(items: _tabItems, currentIndex: _tabIndex, onTap: _goToTab),
+      bottomNavigationBar: AppBottomNav(
+        items: [
+          for (var i = 0; i < _tabItems.length; i++)
+            // お知らせタブ(index 4)にだけ未読件数バッジを付ける
+            if (i == 4)
+              AppBottomNavItem(
+                icon: _tabItems[i].icon,
+                label: _tabItems[i].label,
+                badgeCount: _unreadAnnouncements,
+              )
+            else
+              _tabItems[i],
+        ],
+        currentIndex: _tabIndex,
+        onTap: _goToTab,
+      ),
       body: IndexedStack(
         index: _tabIndex,
         children: [
@@ -111,7 +140,10 @@ class _EmployeeShellState extends State<EmployeeShell> {
           ),
           AttendancesScreen(repository: widget.repositories.attendance, isActive: _tabIndex == 2),
           PaidHolidaysScreen(repository: widget.repositories.paidHoliday),
-          AnnouncementsScreen(repository: widget.repositories.announcement),
+          AnnouncementsScreen(
+            repository: widget.repositories.announcement,
+            onListRefreshed: _loadUnreadAnnouncements,
+          ),
         ],
       ),
     );
