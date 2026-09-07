@@ -4,6 +4,8 @@ import '../common/widgets/app_bottom_nav.dart';
 import '../common/widgets/app_top_bar.dart';
 import 'models/punch_state.dart';
 import 'repositories/employee_repositories.dart';
+import 'repositories/punch_repository.dart';
+import 'utils/punch_error_message.dart';
 import 'screens/announcements_screen.dart';
 import 'screens/attendances_screen.dart';
 import 'screens/home_screen.dart';
@@ -72,12 +74,38 @@ class _EmployeeShellState extends State<EmployeeShell> {
     }
   }
 
-  /// 出勤/退勤/休憩開始/休憩終了いずれかの打刻APIを呼び、
-  /// 返ってきた最新状態で_punchStateを更新する(呼び出し元はPunchScreen)。
-  Future<void> _runPunchAction(Future<PunchState> Function() action) async {
-    final state = await action();
-    if (!mounted) return;
-    setState(() => _punchState = state);
+  /// 出勤/退勤/休憩開始/休憩終了いずれかの打刻APIを呼び、返ってきた最新状態で
+  /// _punchStateを更新する(呼び出し元はPunchScreen)。
+  ///
+  /// 結果メッセージ(成功文言も、"既に出勤中です"/"出勤から時間が経ちすぎている..."等の
+  /// HTTP 200 のまま返る業務エラーも)は必ずSnackBarで提示する。
+  /// 通信エラー・404(前提の勤怠が無い)・その他例外もここで捕捉して表示し、
+  /// 401(トークン失効)だけはログイン画面へ戻す。
+  Future<void> _runPunchAction(Future<PunchResult> Function() action) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final result = await action();
+      if (!mounted) return;
+      setState(() => _punchState = result.state);
+      _showSnackBar(messenger, result.message);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 401) {
+        await _handleLogout();
+        return;
+      }
+      _showSnackBar(messenger, punchErrorMessage(e));
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar(messenger, punchGenericErrorMessage);
+    }
+  }
+
+  void _showSnackBar(ScaffoldMessengerState messenger, String message) {
+    if (message.isEmpty) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _goToTab(int index) => setState(() => _tabIndex = index);
