@@ -1,5 +1,13 @@
 import '../models/punch_state.dart';
 
+/// 打刻APIの実行結果。
+///
+/// [state] は打刻後に `/attendance/today` を叩き直して取得した最新状態。
+/// [message] はサーバーが返した結果メッセージ。成功時("出勤しました" 等)だけでなく、
+/// HTTP 200 のまま返る業務エラー("既に出勤中です" / "出勤から時間が経ちすぎている..." 等)も
+/// ここに入るため、呼び出し側は必ずユーザーへ提示する。
+typedef PunchResult = ({PunchState state, String message});
+
 /// 打刻(出勤・退勤・休憩開始/終了)の取得口。TimeFace2側の
 /// `/api/mobile/attendance/*` エンドポイント(Api\Mobile\AttendanceController)にそれぞれ対応する。
 abstract class PunchRepository {
@@ -7,16 +15,16 @@ abstract class PunchRepository {
   Future<PunchState> fetchState();
 
   /// 出勤打刻。
-  Future<PunchState> clockIn();
+  Future<PunchResult> clockIn();
 
   /// 退勤打刻。
-  Future<PunchState> clockOut();
+  Future<PunchResult> clockOut();
 
   /// 休憩開始打刻。
-  Future<PunchState> startBreak();
+  Future<PunchResult> startBreak();
 
   /// 休憩終了(復帰)打刻。
-  Future<PunchState> endBreak();
+  Future<PunchResult> endBreak();
 }
 
 enum _PunchPhase { notStarted, working, onBreak, finished }
@@ -31,21 +39,23 @@ class MockPunchRepository implements PunchRepository {
   Future<PunchState> fetchState() async => _stateFor(_phase);
 
   @override
-  Future<PunchState> clockIn() => _transition(_PunchPhase.working);
+  Future<PunchResult> clockIn() => _transition(_PunchPhase.working, '出勤しました');
 
   @override
-  Future<PunchState> clockOut() => _transition(_PunchPhase.finished);
+  Future<PunchResult> clockOut() => _transition(_PunchPhase.finished, '退勤しました');
 
   @override
-  Future<PunchState> startBreak() => _transition(_PunchPhase.onBreak);
+  Future<PunchResult> startBreak() =>
+      _transition(_PunchPhase.onBreak, '休憩を開始しました');
 
   @override
-  Future<PunchState> endBreak() => _transition(_PunchPhase.working);
+  Future<PunchResult> endBreak() =>
+      _transition(_PunchPhase.working, '休憩を終了しました');
 
-  Future<PunchState> _transition(_PunchPhase next) async {
+  Future<PunchResult> _transition(_PunchPhase next, String message) async {
     await Future.delayed(const Duration(milliseconds: 300));
     _phase = next;
-    return _stateFor(_phase);
+    return (state: _stateFor(_phase), message: message);
   }
 
   PunchState _stateFor(_PunchPhase phase) {

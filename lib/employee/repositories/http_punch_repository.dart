@@ -35,31 +35,36 @@ class HttpPunchRepository implements PunchRepository {
   }
 
   @override
-  Future<PunchState> clockIn() async {
+  Future<PunchResult> clockIn() async {
     // 現在地を取得して緯度・経度を打刻パラメータに載せる。
     // 位置情報が取れない場合は location が null になり、従来どおりボディ無しで送る。
     final location = await locationResolver();
-    await client.post('/attendance/start-work', location?.toJson());
-    return fetchState();
+    final data = await client.post('/attendance/start-work', location?.toJson());
+    return (state: await fetchState(), message: _messageOf(data));
   }
 
   @override
-  Future<PunchState> clockOut() async {
-    await client.post('/attendance/finish-work');
-    return fetchState();
+  Future<PunchResult> clockOut() async {
+    final data = await client.post('/attendance/finish-work');
+    return (state: await fetchState(), message: _messageOf(data));
   }
 
   @override
-  Future<PunchState> startBreak() async {
-    await client.post('/attendance/start-break');
-    return fetchState();
+  Future<PunchResult> startBreak() async {
+    final data = await client.post('/attendance/start-break');
+    return (state: await fetchState(), message: _messageOf(data));
   }
 
   @override
-  Future<PunchState> endBreak() async {
-    await client.post('/attendance/finish-break');
-    return fetchState();
+  Future<PunchResult> endBreak() async {
+    final data = await client.post('/attendance/finish-break');
+    return (state: await fetchState(), message: _messageOf(data));
   }
+
+  /// 打刻APIのレスポンス `{"message": "..."}` からメッセージを取り出す。
+  /// バックエンドは "既に出勤中です" / "出勤から時間が経ちすぎている..." 等の業務エラーも
+  /// HTTP 200 のまま `message` で返すため、成功・失敗を問わずそのまま拾う。
+  String _messageOf(Map<String, dynamic> data) => data['message'] as String? ?? '';
 
   /// `/attendance/today` の status(isWorking/isOnBreak)からPunchStateを組み立てる。
   PunchState _fromStatus(Map<String, dynamic> status) {

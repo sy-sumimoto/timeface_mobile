@@ -52,15 +52,15 @@ void main() {
         locationResolver: () async => null,
       );
 
-      final state = await repo.clockIn();
+      final result = await repo.clockIn();
 
       expect(api.posts.single.path, '/attendance/start-work');
       expect(api.posts.single.body, isNull);
       // 位置情報が無くても打刻自体は完了する
-      expect(state.statusLabel, '未出勤'); // FakeのtodayステータスがisWorking=false
+      expect(result.state.statusLabel, '未出勤'); // FakeのtodayステータスがisWorking=false
     });
 
-    test('[No.17] 既に出勤中でもサーバー応答を受けて画面状態が崩れない', () async {
+    test('[No.17] 既に出勤中: HTTP200 の message をそのまま結果に載せて返す', () async {
       final api = _FakeApiClient(
         postMessage: '既に出勤中です',
         todayStatus: {'isWorking': true, 'isOnBreak': false},
@@ -71,11 +71,26 @@ void main() {
         locationResolver: () async => null,
       );
 
-      final state = await repo.clockIn();
+      final result = await repo.clockIn();
 
-      expect(state.statusLabel, '出勤中');
-      expect(state.canClockIn, isFalse);
-      expect(state.canClockOut, isTrue);
+      // 業務エラーでも 200 なので例外は投げず、message を呼び出し側へ渡す
+      expect(result.message, '既に出勤中です');
+      expect(result.state.statusLabel, '出勤中');
+      expect(result.state.canClockIn, isFalse);
+      expect(result.state.canClockOut, isTrue);
+    });
+
+    test('成功時は message("出勤しました")を結果に載せる', () async {
+      final api = _FakeApiClient(postMessage: '出勤しました');
+      final repo = HttpPunchRepository(
+        client: api,
+        auth: _StubAuth(),
+        locationResolver: () async => null,
+      );
+
+      final result = await repo.clockIn();
+
+      expect(result.message, '出勤しました');
     });
 
     test('[No.18] 打刻後に /attendance/today を呼び直し、最新状態を返す(POST → GET の順)', () async {
@@ -89,11 +104,11 @@ void main() {
             const GeoLocation(latitude: 1, longitude: 2),
       );
 
-      final state = await repo.clockIn();
+      final result = await repo.clockIn();
 
       expect(api.calls, ['POST /attendance/start-work', 'GET /attendance/today']);
-      expect(state.statusLabel, '出勤中');
-      expect(state.employeeName, '中村陽子'); // auth.currentUser から借用
+      expect(result.state.statusLabel, '出勤中');
+      expect(result.state.employeeName, '中村陽子'); // auth.currentUser から借用
     });
 
     test('[No.23] 通信/バリデーションエラー時は ApiException を送出する', () async {
