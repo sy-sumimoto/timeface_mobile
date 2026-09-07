@@ -69,6 +69,16 @@ void main() {
     expect(api.getPaths, ['/announcements/5']);
     expect(a.body, '本文です');
   });
+
+  test('fetchUnreadCount は /announcements/unread-count を叩き unreadCount を返す', () async {
+    final api = _FakeApiClient({'unreadCount': 7});
+    final repo = HttpAnnouncementRepository(client: api);
+
+    final count = await repo.fetchUnreadCount();
+
+    expect(api.getPaths, ['/announcements/unread-count']);
+    expect(count, 7);
+  });
 }
 
 class _FakeApiClient extends ApiClient {

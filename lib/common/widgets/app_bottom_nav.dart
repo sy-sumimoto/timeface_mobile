@@ -3,9 +3,16 @@ import '../theme/app_colors.dart';
 
 /// [AppBottomNav]の1タブ分(アイコン+ラベル)。各ロールのShellがタブ構成を決める。
 class AppBottomNavItem {
-  const AppBottomNavItem({required this.icon, required this.label});
+  const AppBottomNavItem({
+    required this.icon,
+    required this.label,
+    this.badgeCount = 0,
+  });
   final IconData icon;
   final String label;
+
+  /// アイコン右上に出す未読バッジの件数。0 のときはバッジを表示しない。
+  final int badgeCount;
 }
 
 /// ロール共通の下部タブナビゲーション。表示するタブ(items)は呼び出し側
@@ -42,7 +49,11 @@ class AppBottomNav extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(item.icon, size: 22, color: Colors.white.withValues(alpha: isActive ? 1 : 0.65)),
+                        _IconWithBadge(
+                          icon: item.icon,
+                          isActive: isActive,
+                          badgeCount: item.badgeCount,
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           item.label,
@@ -61,6 +72,59 @@ class AppBottomNav extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// タブアイコンに未読バッジ(赤丸+件数)を重ねる。件数が0のときはアイコンのみ。
+class _IconWithBadge extends StatelessWidget {
+  const _IconWithBadge({
+    required this.icon,
+    required this.isActive,
+    required this.badgeCount,
+  });
+
+  final IconData icon;
+  final bool isActive;
+  final int badgeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconWidget = Icon(
+      icon,
+      size: 22,
+      color: Colors.white.withValues(alpha: isActive ? 1 : 0.65),
+    );
+    if (badgeCount <= 0) return iconWidget;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        iconWidget,
+        Positioned(
+          right: -6,
+          top: -4,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            constraints: const BoxConstraints(minWidth: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDC2626),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.sidebarBg, width: 1.5),
+            ),
+            child: Text(
+              badgeCount > 9 ? '9+' : '$badgeCount',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

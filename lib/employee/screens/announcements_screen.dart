@@ -10,9 +10,17 @@ import 'announcement_detail_screen.dart';
 /// 一覧は `GET /api/mobile/announcements?page=`(1ページ10件)を、
 /// 末尾までスクロールするたびに次ページを読み足す。
 class AnnouncementsScreen extends StatefulWidget {
-  const AnnouncementsScreen({super.key, required this.repository});
+  const AnnouncementsScreen({
+    super.key,
+    required this.repository,
+    this.onListRefreshed,
+  });
 
   final AnnouncementRepository repository;
+
+  /// 1ページ目の取得が完了するたびに呼ばれる(初回・詳細から戻った直後)。
+  /// 親(EmployeeShell)が未読バッジを取り直すために使う。
+  final VoidCallback? onListRefreshed;
 
   @override
   State<AnnouncementsScreen> createState() => _AnnouncementsScreenState();
@@ -62,6 +70,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       _lastPage = page.lastPage;
       _initialLoaded = true;
     });
+    widget.onListRefreshed?.call();
   }
 
   /// 続きのページがあれば読み足す。

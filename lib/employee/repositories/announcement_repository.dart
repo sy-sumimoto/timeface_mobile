@@ -9,6 +9,9 @@ abstract class AnnouncementRepository {
 
   /// お知らせ詳細を取得する。取得と同時にサーバー側で既読になる。
   Future<Announcement> fetchDetail(String id);
+
+  /// 未読のお知らせ件数を取得する(下部タブのバッジ表示用)。
+  Future<int> fetchUnreadCount();
 }
 
 /// 固定のお知らせを返すモック実装。1ページ10件でページングする。
@@ -53,5 +56,11 @@ class MockAnnouncementRepository implements AnnouncementRepository {
   Future<Announcement> fetchDetail(String id) async {
     await Future.delayed(const Duration(milliseconds: 150));
     return _items.firstWhere((e) => e.id == id, orElse: () => _items.first);
+  }
+
+  @override
+  Future<int> fetchUnreadCount() async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    return _items.where((e) => e.isNew).length;
   }
 }
