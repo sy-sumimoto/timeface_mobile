@@ -34,7 +34,8 @@ class EmployeeShell extends StatefulWidget {
   State<EmployeeShell> createState() => _EmployeeShellState();
 }
 
-class _EmployeeShellState extends State<EmployeeShell> {
+class _EmployeeShellState extends State<EmployeeShell>
+    with WidgetsBindingObserver {
   int _tabIndex = 0;
   PunchState? _punchState;
   int _unreadAnnouncements = 0;
@@ -42,8 +43,25 @@ class _EmployeeShellState extends State<EmployeeShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadPunchState();
     _loadUnreadAnnouncements();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // プッシュ通知が無いため、フォアグラウンド復帰時に打刻状況と未読件数を取り直す
+    // (お知らせ一覧そのものの再取得は AnnouncementsScreen 側が担当)。
+    if (state == AppLifecycleState.resumed) {
+      _loadPunchState();
+      _loadUnreadAnnouncements();
+    }
   }
 
   /// お知らせの未読件数を取得して下部タブのバッジに反映する。
@@ -171,6 +189,7 @@ class _EmployeeShellState extends State<EmployeeShell> {
           AnnouncementsScreen(
             repository: widget.repositories.announcement,
             onListRefreshed: _loadUnreadAnnouncements,
+            isActive: _tabIndex == 4,
           ),
         ],
       ),

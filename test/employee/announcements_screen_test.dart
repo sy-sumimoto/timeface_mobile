@@ -53,6 +53,29 @@ Future<_FakeAnnouncementRepository> _pump(
   return repo;
 }
 
+/// isActive を外から切り替えられる形で AnnouncementsScreen を pump する。
+Future<(_FakeAnnouncementRepository, ValueNotifier<bool>)> _pumpWithActive(
+  WidgetTester tester,
+  Map<int, List<Announcement>> pages, {
+  required bool initialActive,
+}) async {
+  final repo = _FakeAnnouncementRepository(pages);
+  final active = ValueNotifier<bool>(initialActive);
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: ValueListenableBuilder<bool>(
+          valueListenable: active,
+          builder: (context, isActive, child) =>
+              AnnouncementsScreen(repository: repo, isActive: isActive),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  return (repo, active);
+}
+
 void main() {
   testWidgets('1ページ目を表示する', (tester) async {
     final repo = await _pump(tester, {
@@ -97,5 +120,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.fetchedPages, [1]);
+  });
+
+  group('タブ再選択 / フォアグラウンド復帰での再取得', () {
+    testWidgets('isActive が false→true になったら1ページ目を取り直す', (tester) async {
+      final (repo, active) = await _pumpWithActive(
+        tester,
+        {1: [_a(1)]},
+        initialActive: false,
+      );
+      // initState で1回は読む(IndexedStack が全タブ生成するため)
+      expect(repo.fetchedPages, [1]);
+
+      active.value = true; // タブを選び直した
+      await tester.pumpAndSettle();
+
+      expect(repo.fetchedPages, [1, 1]);
+    });
+
+    testWidgets('お知らせタブ表示中にフォアグラウンド復帰したら取り直す', (tester) async {
+      final (repo, _) = await _pumpWithActive(
+        tester,
+        {1: [_a(1)]},
+        initialActive: true,
+      );
+      expect(repo.fetchedPages, [1]);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      expect(repo.fetchedPages, [1, 1]);
+    });
+
+    testWidgets('別タブ表示中のフォアグラウンド復帰では取り直さない', (tester) async {
+      final (repo, _) = await _pumpWithActive(
+        tester,
+        {1: [_a(1)]},
+        initialActive: false,
+      );
+      expect(repo.fetchedPages, [1]);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      expect(repo.fetchedPages, [1]); // 増えない
+    });
   });
 }
