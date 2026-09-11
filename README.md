@@ -9,7 +9,7 @@ TimeFace2(Laravel/Sanctum)のモバイル向けAPI(`/api/mobile/*`)を叩く、�
   - `.metadata` に記録されているバージョンと合わせること。`flutter --version` で確認できる。
   - 異なるバージョンでも動く可能性はあるが、未検証。
 - Android実機/エミュレータ向け: Android Studio（Android SDK・Java(JBR)同梱）
-- iOS実機/シミュレータ向け（macOSのみ）: Xcode
+- iOS実機/シミュレータ向け（macOSのみ）: Xcode、CocoaPods（`sudo gem install cocoapods` または `brew install cocoapods`）
 - **Windowsで開発する場合**: 「開発者モード」を有効化しておくこと（プラグイン解決にシンボリックリンクを使うため）。
   未設定だと `flutter pub get` / `flutter build` が `Building with plugins requires symlink support.` で失敗する。
   設定 → プライバシーとセキュリティ → 開発者向け、または `start ms-settings:developers` から有効化。
@@ -73,6 +73,18 @@ dart run flutter_launcher_icons
 ```
 
 設定は `pubspec.yaml` の `flutter_launcher_icons:` セクション。
+
+## iOS/macOSでの動作について
+
+**この開発環境(Windows)ではXcodeが無く、iOS/macOSでのビルド・実行は一度も検証できていない。** Macで試す際は以下に注意。
+
+- `ios/Podfile`がリポジトリに存在しない。`flutter run`/`flutter build ios`実行時にFlutterが自動生成するはずだが、うまくいかない場合は手動で以下を試す。
+  ```bash
+  cd ios && pod install
+  ```
+- iOSシミュレータでの実行には署名不要なので、まずはシミュレータで試すのが確実。
+- 実機で試す場合は、Xcodeで`ios/Runner.xcworkspace`を開き、自分のApple ID(無料アカウントで可)をDevelopment Teamに設定する必要がある(Bundle IDが`com.example.timefaceMobile`のままなので、実機によっては競合を避けるため変更が要ることもある)。
+- macOSデスクトップ版(`macos/`)も同様に未検証。
 
 ## 既知の未整備・制限事項
 
