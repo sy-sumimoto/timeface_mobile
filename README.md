@@ -22,25 +22,25 @@ flutter pub get
 
 ## 実行方法(API接続先)
 
-APIの接続先は `--dart-define=API_ORIGIN=...` で切り替える。**未指定時は本番のTimeFace2 (`https://timeface.ddd-system.co.jp`) に接続する。**
+APIの接続先は `--dart-define=API_ORIGIN=...` で切り替える。**未指定時はローカルのTimeFace2(`php artisan serve --port=8123`、Androidエミュレータ用の`http://10.0.2.2:8123`)に接続する。**
 
-ローカルのTimeFace2(`php artisan serve --port=8123`)に接続してテストする場合は、環境に応じて以下を指定する。
+Androidエミュレータ以外でローカルサーバーに接続する場合は、環境に応じて以下を指定する。
 
 | 実行環境 | 指定するAPI_ORIGIN |
 |---|---|
-| Androidエミュレータ | `http://10.0.2.2:8123`(エミュレータからホストPCを指すエイリアス) |
+| Androidエミュレータ | 指定不要(既定値 `http://10.0.2.2:8123`。エミュレータからホストPCを指すエイリアス) |
 | iOSシミュレータ / デスクトップ(Windows/macOS) | `http://127.0.0.1:8123` |
 | 実機(Android/iOS) | `http://<ホストPCのLAN IP>:8123`(実機とホストPCが同じネットワークにいること) |
 
 ```powershell
-# 例: Androidエミュレータでローカルサーバーに接続して起動
-flutter run -d <device-id> --dart-define=API_ORIGIN=http://10.0.2.2:8123
+# 例: iOSシミュレータ/デスクトップでローカルサーバーに接続して起動
+flutter run -d <device-id> --dart-define=API_ORIGIN=http://127.0.0.1:8123
 ```
 
-本番サーバーに接続する場合は `--dart-define` を付けずにそのまま実行すればよい。
+本番サーバー(`https://timeface.ddd-system.co.jp`)に接続する場合は、明示的に指定する。
 
 ```powershell
-flutter run -d <device-id>
+flutter run -d <device-id> --dart-define=API_ORIGIN=https://timeface.ddd-system.co.jp
 ```
 
 ## テスト・静的解析
